@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HERCULES | INFINITY ENGINE</title>
+    <style>
+        /* --- VISUALS --- */
+        body {
+            margin: 0;
+            background: #000;
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Nebula Background */
+        .nebula-bg {
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at center, #2b0057, #000000);
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0, 255, 65, 0.1), transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.2), transparent 30%);
+            animation: galaxyMove 20s infinite alternate;
+            z-index: -1;
+        }
+        @keyframes galaxyMove {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(5deg) scale(1.1); }
+        }
+
+        /* Interface */
+        .container {
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: 5px;
+            background: linear-gradient(90deg, #00ff41, #00ccff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 255, 65, 0.6);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        p.subtitle {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 50px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Input Box */
+        .input-wrapper {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px;
+            border-radius: 50px;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .input-wrapper:hover, .input-wrapper:focus-within {
+            box-shadow: 0 0 60px rgba(0, 255, 65, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.1);
+            border-color: #00ff41;
+            transform: scale(1.02);
+        }
+
+        input {
+            width: 100%;
+            padding: 20px 30px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1.4rem;
+            outline: none;
+            text-align: center;
+            border-radius: 50px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        input::placeholder { color: rgba(255, 255, 255, 0.3); font-style: italic; font-size: 1.1rem; }
+
+        /* Result Card */
+        .result-card {
+            display: none; 
+            margin-top: 50px;
+            background: rgba(5, 5, 5, 0.95);
+            border: 1px solid #333;
+            border-top: 5px solid #00ff41;
+            padding: 30px;
+            text-align: left;
+            border-radius: 15px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: translateY(30px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .card-header {
+            font-size: 0.8rem;
+            color: #00ccff;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .card-content {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            color: #eee;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .loading-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #ff00ff, #00ff41, #00ccff);
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            animation: load 1s infinite linear;
+            display: none;
+        }
+        @keyframes load { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="nebula-bg"></div>
+
+    <div class="container">
+        <h1>ODYSSEY AI</h1>
+        <p class="subtitle">The Infinite Creator</p>
+
+        <div class="input-wrapper">
+            <input type="text" id="ai-box" placeholder="Ask to create (Music, App, Store)..." autocomplete="off">
+            <div class="loading-bar" id="loader"></div>
+        </div>
+
+        <div class="result-card" id="output-card">
+            <div class="card-header">
+                <span id="card-type">SYSTEM OUTPUT</span>
+                <span id="build-id">BUILD v1.0</span>
+            </div>
+            <div class="card-content" id="card-text"></div>
+        </div>
+    </div>
+
+<script>
+    const input = document.getElementById('ai-box');
+    const outputCard = document.getElementById('output-card');
+    const cardText = document.getElementById('card-text');
+    const cardType = document.getElementById('card-type');
+    const buildId = document.getElementById('build-id');
+    const loader = document.getElementById('loader');
+
+    // --- INFINITE DATA BANKS ---
+    const musicData = {
+        genres: ["Dark Phonk", "Cyber-Trap", "Ethereal Lo-Fi", "Industrial Techno", "Sovereign Rap", "Gregorian Bass"],
+        keys: ["C Minor", "F# Major", "Bb Minor", "Eb Pentatonic", "G Harmonic Minor"],
+        bpms: [88, 120, 140, 160, 95, 130],
+        instruments: ["808 Distortion", "Violin Stabs", "Analog Synths", "Choir Samples", "Heavy Guitars"]
+    };
+
+    const appData = {
+        types: ["Battle Royale", "Sovereign Social Network", "Decentralized Exchange", "VR Fitness RPG", "AR Ghost Hunter"],
+        engines: ["Unreal Engine 5", "Unity Pro", "Godot (Custom Build)", "Rust/WASM"],
+        features: ["Rollback Netcode", "Haptic Feedback", "Neural Link Support", "Local Mesh Networking", "Zero-Knowledge Proofs"]
+    };
+
+    const storeData = {
+        niches: ["Sovereign Gear", "Organic Superfoods", "Gold Bullion", "Tactical Equipment", "Rare Books"],
+        currencies: ["Bitcoin (Lightning)", "Gold/Silver Weight", "Barter/Trade", "Monero"],
+        aesthetics: ["Minimalist Black", "Cyberpunk Neon", "Natural Paper/Ink", "High-End Luxury"]
+    };
+
+    // --- RANDOMIZER FUNCTION ---
+    function pick(array) {
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const query = this.value.trim().toLowerCase();
+            if(!query) return;
+            
+            loader.style.display = 'block';
+            outputCard.style.display = 'none';
+            
+            // Generate a unique Build ID every time
+            const randomBuild = "BUILD v" + Math.floor(Math.random() * 9) + "." + Math.floor(Math.random() * 99) + "-ALPHA";
+            buildId.innerText = randomBuild;
+
+            setTimeout(() => {
+                generateResult(query);
+                loader.style.display = 'none';
+                outputCard.style.display = 'block';
+            }, 1000); 
+        }
+    });
+
+    function generateResult(query) {
+        let title = "UNKNOWN PROTOCOL";
+        let content = "System analyzing request... Try asking for 'Music', 'App', 'Store', or 'Defense'.";
+
+        // --- 1. INFINITE MUSIC STUDIO ---
+        if (query.includes("studio") || query.includes("beat") || query.includes("music") || query.includes("song")) {
+            title = "SONIC ARCHITECTURE [UNIQUE SEED]";
+            content = `>> GENERATING NEW STUDIO SESSION...
+
+[1] AUDIO CORE:
+   - Genre: ${pick(musicData.genres)}
+   - Key: ${pick(musicData.keys)}
+   - Tempo: ${pick(musicData.bpms)} BPM
+
+[2] INSTRUMENTATION LOADED:
+   - Lead: ${pick(musicData.instruments)}
+   - Sub: ${pick(musicData.instruments)}
+   - Drums: Custom Sequencer
+
+[3] PROCESSING:
+   - Mastering Chain: Analog Warmth + Limiter
+   - Status: READY TO RECORD.`;
+        }
+
+        // --- 2. INFINITE APP BUILDER ---
+        else if (query.includes("app") || query.includes("game") || query.includes("smash")) {
+            title = "APP GENESIS [UNIQUE SEED]";
+            content = `>> COMPILING CUSTOM SOFTWARE...
+
+[1] ARCHITECTURE:
+   - Type: ${pick(appData.types)}
+   - Engine: ${pick(appData.engines)}
+   - Platform: Cross-Platform (Mobile/VR/Web)
+
+[2] CORE FEATURES:
+   - ${pick(appData.features)} [ACTIVE]
+   - ${pick(appData.features)} [ACTIVE]
+   - Physics: Real-Time Simulation
+
+[3] DEPLOYMENT:
+   - Compiled in: 0.4s
+   - Status: LAUNCH READY.`;
+        }
+
+        // --- 3. INFINITE COMMERCE ---
+        else if (query.includes("commerce") || query.includes("store") || query.includes("shop")) {
+            title = "SOVEREIGN MARKET [UNIQUE SEED]";
+            content = `>> ESTABLISHING TRADE ROUTE...
+
+[1] STOREFRONT PARAMETERS:
+   - Niche: ${pick(storeData.niches)}
+   - Aesthetic: ${pick(storeData.aesthetics)}
+   - Jurisdiction: Private Membership Association (PMA)
+
+[2] FINANCIAL RAILS:
+   - Primary: ${pick(storeData.currencies)}
+   - Secondary: ${pick(storeData.currencies)}
+   - Fiat Gateway: DISABLED (Security Protocol)
+
+[3] STATUS:
+   - Inventory: LINKED
+   - Open for Business.`;
+        }
+        
+        // --- 4. LEGAL/HEALTH (Standard) ---
+        else if (query.includes("defense") || query.includes("scan")) {
+             title = "SOVEREIGN UTILITY";
+             content = `>> ACCESSING SECURE VAULT...
+             
+- If SCANNING: Analyzing molecular structure...
+- If DEFENSE: Accessing Common Law library...
+
+[!] STATUS: SYSTEM ACTIVE AND PROTECTING.`;
+        }
+
+        // UPDATE TEXT
+        cardType.innerText = title;
+        cardText.innerText = content;
+    }
+</script>
+</body>
+</html>
